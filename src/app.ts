@@ -1,14 +1,24 @@
+import bodyParser from 'body-parser';
+import express, { Request, Response } from 'express';
+import buildSchemas, { db } from './schemas';
 import loggerUtil from './utils/logger.util';
 import rideRouter from './api/ride/ride.route';
-import { Application, Request, Response } from 'express';
 
-module.exports = (db, app: Application) => {
-  app.get('/health', (req: Request, res: Response) => {
-    res.send('Healthy');
-    loggerUtil.info('Server Sent A Hello World!');
-  });
+const app = express();
 
-  app.use('/', [rideRouter]);
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-  return app;
-};
+db.serialize(() => {
+  buildSchemas(db);
+  console.log(`Database has connected`);
+});
+
+app.get('/health', (req: Request, res: Response) => {
+  res.send('Healthy');
+  loggerUtil.info('Server Sent A Hello World!');
+});
+
+app.use('/', [rideRouter]);
+
+module.exports = app;
